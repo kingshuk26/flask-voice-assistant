@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Jarvis - Your Voice Assistant</title>
+
+  <!-- Bootstrap & Font Awesome -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+  <style>
+    body {
+      background: #0f0f0f;
+      color: #f8f8f8;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      padding-top: 80px;
+    }
+
+    h1 {
+      font-weight: bold;
+      color: #00ffd5;
+    }
+
+    #recordBtn {
+      font-size: 30px;
+      padding: 20px 40px;
+      border-radius: 50%;
+      border: none;
+      background: #1e90ff;
+      color: white;
+      transition: 0.3s;
+      box-shadow: 0 0 10px #00ffd5, 0 0 20px #00ffd5;
+    }
+
+    #recordBtn:hover {
+      background: #00bfff;
+      box-shadow: 0 0 20px #00ffd5, 0 0 30px #00ffd5;
+    }
+
+    .recording-dot {
+      width: 15px;
+      height: 15px;
+      background: red;
+      border-radius: 50%;
+      display: inline-block;
+      margin-left: 10px;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.5); opacity: 0.6; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    #result {
+      margin-top: 30px;
+      background-color: #1a1a1a;
+      border-radius: 10px;
+      padding: 20px;
+      font-size: 1.2rem;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      border: 1px solid #333;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>🎙️ Talk to Jarvis</h1>
+    <p class="text-muted">Click the mic below and give a voice command</p>
+
+    <button id="recordBtn" onclick="startRecording()">
+      <i class="fa-solid fa-microphone"></i>
+    </button>
+    <span id="recordingStatus" style="display:none;">
+      <span class="recording-dot"></span> Listening...
+    </span>
+
+    <div id="result"></div>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    let mediaRecorder;
+    let audioChunks = [];
+
+    async function startRecording() {
+      document.getElementById("recordingStatus").style.display = "inline-block";
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = event => {
+        audioChunks.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const formData = new FormData();
+        formData.append('audio_data', audioBlob, 'audio.webm');
+
+        const response = await fetch('/process_audio', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+        document.getElementById("result").innerHTML =
+          `<b>You said:</b> ${result.command}<br><b>Jarvis:</b> ${result.response}`;
+        
+        document.getElementById("recordingStatus").style.display = "none";
+      };
+
+      mediaRecorder.start();
+      setTimeout(() => {
+        mediaRecorder.stop();
+      }, 5000); // record for 5 seconds
+    }
+  </script>
+
+</body>
+</html>
