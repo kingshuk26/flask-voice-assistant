@@ -64,6 +64,12 @@ Voice Assistant/
    Download and install from: https://ffmpeg.org/download.html
    Add ffmpeg/bin to your system PATH
 
+🔑 API Key Setup
+This project uses the OpenWeatherMap API to fetch real-time weather data.
+Get Your Free API Key
+Visit https://openweathermap.org/api
+
+
 ▶️ Run the App
     python app.py
 
